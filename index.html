@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV Viewer & Filter</title>
+
+    <!-- ============================================================
+         CSS SECTION
+         ============================================================ -->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        /* Upload Section */
+        .upload-section {
+            background: #f8f9fa;
+            border: 2px dashed #667eea;
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+        }
+
+        .upload-section:hover {
+            border-color: #764ba2;
+            background: #f3f4f7;
+        }
+
+        .upload-section input[type="file"] {
+            display: none;
+        }
+
+        .upload-label {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 30px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: 600;
+            transition: transform 0.2s ease;
+        }
+
+        .upload-label:hover {
+            transform: translateY(-2px);
+        }
+
+        .upload-label:active {
+            transform: translateY(0);
+        }
+
+        .file-info {
+            margin-top: 15px;
+            font-size: 0.95em;
+            color: #666;
+        }
+
+        .file-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        /* Status Message */
+        .status {
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: none;
+            font-weight: 500;
+        }
+
+        .status.show {
+            display: block;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        /* Filter Section */
+        .filter-section {
+            margin-bottom: 30px;
+        }
+
+        .filter-section h2 {
+            font-size: 1.4em;
+            color: #333;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .filter-section h2::before {
+            content: '⚙';
+            font-size: 0.9em;
+        }
+
+        .filters-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .filter-group label {
+            font-size: 0.9em;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .filter-group select {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 1em;
+            background-color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .filter-group select:hover {
+            border-color: #667eea;
+        }
+
+        .filter-group select:focus {
+            outline: none;
+            border-color: #764ba2;
+            box-shadow: 0 0 0 3px rgba(118, 75, 162, 0.1);
+        }
+
+        .filter-group select:disabled {
+            background-color: #f0f0f0;
+            color: #999;
+            cursor: not-allowed;
+        }
+
+        .filter-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-reset {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-reset:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .btn-reset:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Search Section */
+        .search-section {
+            margin-bottom: 30px;
+        }
+
+        .search-section h2 {
+            font-size: 1.4em;
+            color: #333;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .search-section h2::before {
+            content: '🔍';
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+        }
+
+        .search-box input {
+            flex: 1;
+            max-width: 400px;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .search-box input::placeholder {
+            color: #aaa;
+        }
+
+        /* Results Section */
+        .results-section {
+            margin-top: 30px;
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .results-header h2 {
+            font-size: 1.4em;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .results-header h2::before {
+            content: '📊';
+        }
+
+        .results-count {
+            font-size: 1em;
+            color: #666;
+            background: #f0f0f0;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            margin-top: 15px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            position: sticky;
+            top: 0;
+        }
+
+        th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.95em;
+            white-space: nowrap;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-top: 1px solid #eee;
+            font-size: 0.95em;
+            color: #333;
+            word-break: break-word;
+        }
+
+        tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        tbody tr:nth-child(even) {
+            background: #fafbfc;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state p {
+            font-size: 1.1em;
+            margin-bottom: 10px;
+        }
+
+        .empty-state .emoji {
+            font-size: 3em;
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .filters-container {
+                grid-template-columns: 1fr;
+            }
+
+            .search-box {
+                flex-direction: column;
+            }
+
+            .search-box input {
+                max-width: 100%;
+            }
+
+            .results-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            th, td {
+                padding: 10px;
+                font-size: 0.85em;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+
+            .header {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 1.5em;
+            }
+
+            .content {
+                padding: 15px;
+            }
+
+            .upload-section {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- ============================================================
+         HTML SECTION
+         ============================================================ -->
+
+    <div class="container">
+        <div class="header">
+            <h1>📁 CSV Viewer & Filter</h1>
+            <p>Upload a CSV file to view, filter, and search your data</p>
+        </div>
+
+        <div class="content">
+            <!-- Upload Section -->
+            <div class="upload-section">
+                <label for="csvFile" class="upload-label">
+                    📤 Choose CSV File
+                </label>
+                <input 
+                    type="file" 
+                    id="csvFile" 
+                    accept=".csv"
+                >
+                <div class="file-info">
+                    <span id="fileInfo">No file selected</span>
+                </div>
+            </div>
+
+            <!-- Status Message -->
+            <div id="status" class="status"></div>
+
+            <!-- Filter Section -->
+            <div class="filter-section">
+                <h2>Filters</h2>
+                <div class="filters-container" id="filtersContainer">
+                    <p id="noFiltersMsg" style="color: #999;">Upload a CSV file to see filter options</p>
+                </div>
+                <div class="filter-actions">
+                    <button id="resetBtn" class="btn btn-reset" disabled>🔄 Reset Filters</button>
+                </div>
+            </div>
+
+            <!-- Search Section -->
+            <div class="search-section">
+                <h2>Search</h2>
+                <div class="search-box">
+                    <input 
+                        type="text" 
+                        id="searchInput" 
+                        placeholder="Search all columns..."
+                        disabled
+                    >
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="results-section">
+                <div class="results-header">
+                    <h2>Results</h2>
+                    <div class="results-count">
+                        <span id="resultCount">0</span> / <span id="totalCount">0</span> rows
+                    </div>
+                </div>
+
+                <div class="table-wrapper">
+                    <table id="resultsTable">
+                        <thead>
+                            <tr id="tableHeader"></tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <tr>
+                                <td colspan="100" class="empty-state">
+                                    <span class="emoji">📂</span>
+                                    <p>Upload a CSV file to display results</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================
+         JAVASCRIPT SECTION
+         ============================================================ -->
+    <script>
+        // ================================================================
+        // STATE MANAGEMENT
+        // ================================================================
+        const state = {
+            csvData: [],
+            headers: [],
+            filters: {},
+            searchTerm: '',
+            filteredData: []
+        };
+
+        // ================================================================
+        // DOM ELEMENTS
+        // ================================================================
+        const csvFileInput = document.getElementById('csvFile');
+        const fileInfoSpan = document.getElementById('fileInfo');
+        const statusDiv = document.getElementById('status');
+        const filtersContainer = document.getElementById('filtersContainer');
+        const noFiltersMsg = document.getElementById('noFiltersMsg');
+        const searchInput = document.getElementById('searchInput');
+        const resetBtn = document.getElementById('resetBtn');
+        const tableHeader = document.getElementById('tableHeader');
+        const tableBody = document.getElementById('tableBody');
+        const resultCount = document.getElementById('resultCount');
+        const totalCount = document.getElementById('totalCount');
+
+        // ================================================================
+        // UTILITY FUNCTIONS
+        // ================================================================
+
+        /**
+         * Display status message to user
+         */
+        function showStatus(message, type = 'info') {
+            statusDiv.textContent = message;
+            statusDiv.className = `status show ${type}`;
+            setTimeout(() => {
+                if (type !== 'error') {
+                    statusDiv.classList.remove('show');
+                }
+            }, 4000);
+        }
+
+        /**
+         * Parse CSV string into array of arrays
+         * Handles quoted fields and commas within quotes
+         */
+        function parseCSV(csvText) {
+            const rows = [];
+            let currentRow = [];
+            let currentField = '';
+            let insideQuotes = false;
+
+            for (let i = 0; i < csvText.length; i++) {
+                const char = csvText[i];
+                const nextChar = csvText[i + 1];
+
+                if (char === '"') {
+                    if (insideQuotes && nextChar === '"') {
+                        // Escaped quote
+                        currentField += '"';
+                        i++;
+                    } else {
+                        // Toggle quote state
+                        insideQuotes = !insideQuotes;
+                    }
+                } else if (char === ',' && !insideQuotes) {
+                    // Field separator
+                    currentRow.push(currentField.trim());
+                    currentField = '';
+                } else if ((char === '\n' || char === '\r') && !insideQuotes) {
+                    // Row separator
+                    if (currentField || currentRow.length > 0) {
+                        currentRow.push(currentField.trim());
+                        if (currentRow.some(field => field.length > 0)) {
+                            rows.push(currentRow);
+                        }
+                        currentRow = [];
+                        currentField = '';
+                    }
+                    // Skip \r\n combinations
+                    if (char === '\r' && nextChar === '\n') {
+                        i++;
+                    }
+                } else {
+                    currentField += char;
+                }
+            }
+
+            // Add last field and row
+            if (currentField || currentRow.length > 0) {
+                currentRow.push(currentField.trim());
+                if (currentRow.some(field => field.length > 0)) {
+                    rows.push(currentRow);
+                }
+            }
+
+            return rows;
+        }
+
+        /**
+         * Convert array of arrays to array of objects using headers as keys
+         */
+        function rowsToObjects(rows) {
+            if (rows.length === 0) return [];
+
+            const headers = rows[0];
+            return rows.slice(1).map(row => {
+                const obj = {};
+                headers.forEach((header, index) => {
+                    obj[header] = row[index] || '';
+                });
+                return obj;
+            });
+        }
+
+        /**
+         * Get unique values from a column
+         */
+        function getUniqueValues(dataArray, columnName) {
+            const values = new Set();
+            dataArray.forEach(row => {
+                if (row[columnName]) {
+                    values.add(row[columnName]);
+                }
+            });
+            return Array.from(values).sort();
+        }
+
+        // ================================================================
+        // CSV HANDLING
+        // ================================================================
+
+        /**
+         * Handle CSV file upload
+         */
+        function handleCSVUpload(event) {
+            const file = event.target.files[0];
+
+            if (!file) {
+                fileInfoSpan.textContent = 'No file selected';
+                return;
+            }
+
+            if (!file.name.endsWith('.csv')) {
+                showStatus('❌ Please upload a valid CSV file', 'error');
+                fileInfoSpan.textContent = 'Invalid file type';
+                return;
+            }
+
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                try {
+                    const csvText = e.target.result;
+                    const rows = parseCSV(csvText);
+
+                    if (rows.length === 0) {
+                        showStatus('❌ CSV file is empty', 'error');
+                        return;
+                    }
+
+                    if (rows.length === 1) {
+                        showStatus('❌ CSV file only contains headers, no data rows', 'error');
+                        return;
+                    }
+
+                    // Update state
+                    state.headers = rows[0];
+                    state.csvData = rowsToObjects(rows);
+                    state.filters = {};
+                    state.searchTerm = '';
+
+                    // Update UI
+                    fileInfoSpan.textContent = `✓ ${file.name} (${state.csvData.length} rows)`;
+                    showStatus(`✓ Loaded ${state.csvData.length} rows with ${state.headers.length} columns`, 'success');
+
+                    // Rebuild UI
+                    renderFilters();
+                    renderResults();
+                    enableControls(true);
+
+                } catch (error) {
+                    console.error('CSV parsing error:', error);
+                    showStatus('❌ Error parsing CSV file: ' + error.message, 'error');
+                }
+            };
+
+            reader.onerror = function() {
+                showStatus('❌ Error reading file', 'error');
+            };
+
+            reader.readAsText(file);
+        }
+
+        // ================================================================
+        // FILTER MANAGEMENT
+        // ================================================================
+
+        /**
+         * Render filter dropdowns
+         */
+        function renderFilters() {
+            filtersContainer.innerHTML = '';
+            noFiltersMsg.style.display = 'none';
+
+            state.headers.forEach(header => {
+                const uniqueValues = getUniqueValues(state.csvData, header);
+                const filterGroup = document.createElement('div');
+                filterGroup.className = 'filter-group';
+
+                const label = document.createElement('label');
+                label.textContent = header;
+
+                const select = document.createElement('select');
+                select.id = `filter-${header}`;
+                select.dataset.header = header;
+
+                const allOption = document.createElement('option');
+                allOption.value = '';
+                allOption.textContent = '-- All --';
+                select.appendChild(allOption);
+
+                uniqueValues.forEach(value => {
+                    const option = document.createElement('option');
+                    option.value = value;
+                    option.textContent = value;
+                    select.appendChild(option);
+                });
+
+                select.addEventListener('change', handleFilterChange);
+
+                filterGroup.appendChild(label);
+                filterGroup.appendChild(select);
+                filtersContainer.appendChild(filterGroup);
+            });
+        }
+
+        /**
+         * Handle filter dropdown change
+         */
+        function handleFilterChange(event) {
+            const header = event.target.dataset.header;
+            const value = event.target.value;
+
+            if (value === '') {
+                delete state.filters[header];
+            } else {
+                state.filters[header] = value;
+            }
+
+            renderResults();
+        }
+
+        /**
+         * Reset all filters
+         */
+        function resetFilters() {
+            state.filters = {};
+            state.searchTerm = '';
+            searchInput.value = '';
+
+            // Reset filter dropdowns
+            document.querySelectorAll('[data-header]').forEach(select => {
+                select.value = '';
+            });
+
+            renderResults();
+        }
+
+        // ================================================================
+        // FILTERING & SEARCH
+        // ================================================================
+
+        /**
+         * Apply filters and search to CSV data
+         */
+        function applyFiltersAndSearch() {
+            let filtered = state.csvData;
+
+            // Apply column filters (AND logic)
+            Object.entries(state.filters).forEach(([header, filterValue]) => {
+                filtered = filtered.filter(row => row[header] === filterValue);
+            });
+
+            // Apply search term (checks all columns)
+            if (state.searchTerm.trim() !== '') {
+                const searchLower = state.searchTerm.toLowerCase();
+                filtered = filtered.filter(row => {
+                    return Object.values(row).some(value =>
+                        String(value).toLowerCase().includes(searchLower)
+                    );
+                });
+            }
+
+            state.filteredData = filtered;
+        }
+
+        /**
+         * Handle search input
+         */
+        function handleSearch(event) {
+            state.searchTerm = event.target.value;
+            renderResults();
+        }
+
+        // ================================================================
+        // RENDERING
+        // ================================================================
+
+        /**
+         * Render table headers
+         */
+        function renderTableHeaders() {
+            tableHeader.innerHTML = '';
+            state.headers.forEach(header => {
+                const th = document.createElement('th');
+                th.textContent = header;
+                tableHeader.appendChild(th);
+            });
+        }
+
+        /**
+         * Render table rows
+         */
+        function renderTableRows() {
+            tableBody.innerHTML = '';
+
+            if (state.filteredData.length === 0) {
+                const tr = document.createElement('tr');
+                const td = document.createElement('td');
+                td.colSpan = state.headers.length;
+                td.className = 'empty-state';
+                td.innerHTML = '<span class="emoji">🔍</span><p>No results found</p>';
+                tr.appendChild(td);
+                tableBody.appendChild(tr);
+                return;
+            }
+
+            state.filteredData.forEach(rowData => {
+                const tr = document.createElement('tr');
+                state.headers.forEach(header => {
+                    const td = document.createElement('td');
+                    td.textContent = rowData[header] || '';
+                    tr.appendChild(td);
+                });
+                tableBody.appendChild(tr);
+            });
+        }
+
+        /**
+         * Update result counts
+         */
+        function updateCounts() {
+            resultCount.textContent = state.filteredData.length;
+            totalCount.textContent = state.csvData.length;
+        }
+
+        /**
+         * Render all results
+         */
+        function renderResults() {
+            applyFiltersAndSearch();
+            renderTableHeaders();
+            renderTableRows();
+            updateCounts();
+        }
+
+        // ================================================================
+        // CONTROL STATE
+        // ================================================================
+
+        /**
+         * Enable/disable controls based on data availability
+         */
+        function enableControls(enabled) {
+            searchInput.disabled = !enabled;
+            resetBtn.disabled = !enabled;
+
+            document.querySelectorAll('[data-header]').forEach(select => {
+                select.disabled = !enabled;
+            });
+
+            if (enabled) {
+                noFiltersMsg.style.display = 'none';
+            }
+        }
+
+        // ================================================================
+        // EVENT LISTENERS
+        // ================================================================
+        csvFileInput.addEventListener('change', handleCSVUpload);
+        searchInput.addEventListener('input', handleSearch);
+        resetBtn.addEventListener('click', resetFilters);
+
+        // Initialize
+        enableControls(false);
+    </script>
+</body>
+
+</html>
