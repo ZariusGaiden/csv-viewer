@@ -139,6 +139,53 @@
             margin-bottom: 30px;
         }
 
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .section-header:hover {
+            opacity: 0.8;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+        }
+
+        .toggle-btn {
+            background: none;
+            border: none;
+            font-size: 1.2em;
+            cursor: pointer;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.3s ease;
+        }
+
+        .toggle-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .section-content {
+            transition: all 0.3s ease;
+            max-height: 1000px;
+            overflow: hidden;
+        }
+
+        .section-content.collapsed {
+            max-height: 0;
+            opacity: 0;
+            margin-bottom: 0 !important;
+        }
+
         .filter-section h2 {
             font-size: 1.4em;
             color: #333;
@@ -283,6 +330,18 @@
             content: '🔍';
         }
 
+        .filter-section.collapsed .filters-container,
+        .filter-section.collapsed .filter-actions,
+        .search-section.collapsed .search-box {
+            display: none;
+        }
+
+        .results-section.collapsed .table-wrapper,
+        .results-section.collapsed #paginationSectionTop,
+        .results-section.collapsed #paginationSection {
+            display: none;
+        }
+
         .search-box {
             display: flex;
             gap: 10px;
@@ -343,6 +402,8 @@
 
         .table-wrapper {
             overflow-x: auto;
+            overflow-y: auto;
+            max-height: 600px;
             border-radius: 6px;
             border: 1px solid #ddd;
             margin-top: 15px;
@@ -369,6 +430,7 @@
             white-space: nowrap;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            width: 20em;
         }
 
         td {
@@ -411,6 +473,11 @@
             background: #f8f9fa;
             border-radius: 8px;
             border: 1px solid #e0e0e0;
+        }
+
+        .pagination-top {
+            margin-top: 0;
+            margin-bottom: 20px;
         }
 
         .pagination-controls {
@@ -578,6 +645,44 @@
                 padding: 20px;
             }
         }
+
+        /* Scroll to Top Button */
+        .scroll-to-top {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+            font-size: 0.8em;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .scroll-to-top:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+        }
+
+        .scroll-to-top:active {
+            transform: translateY(0);
+        }
+
+        @media (max-width: 480px) {
+            .scroll-to-top {
+                bottom: 15px;
+                right: 15px;
+                width: 45px;
+                height: 45px;
+                font-size: 0.7em;
+            }
+        }
     </style>
 </head>
 
@@ -613,35 +718,84 @@
 
             <!-- Filter Section -->
             <div class="filter-section">
-                <h2>Filters & Columns</h2>
-                <div class="filters-container" id="filtersContainer">
-                    <p id="noFiltersMsg" style="color: #999;">Upload a CSV file to see filter options</p>
+                <div class="section-header" onclick="toggleSection(event, 'filter-section')">
+                    <div class="section-title">
+                        <h2 style="margin-bottom: 0;">Filters & Columns</h2>
+                    </div>
+                    <button class="toggle-btn" id="filterToggleBtn" onclick="event.stopPropagation()">▼</button>
                 </div>
-                <div class="filter-actions">
-                    <button id="resetBtn" class="btn btn-reset" disabled>🔄 Reset Filters</button>
-                    <button id="toggleAllBtn" class="btn btn-toggle-all" disabled>👁️ Toggle All Columns</button>
+                <div class="section-content">
+                    <div class="filters-container" id="filtersContainer">
+                        <p id="noFiltersMsg" style="color: #999;">Upload a CSV file to see filter options</p>
+                    </div>
+                    <div class="filter-actions">
+                        <button id="resetBtn" class="btn btn-reset" disabled>🔄 Reset Filters</button>
+                        <button id="toggleAllBtn" class="btn btn-toggle-all" disabled>👁️ Toggle All Columns</button>
+                    </div>
                 </div>
             </div>
 
             <!-- Search Section -->
             <div class="search-section">
-                <h2>Search</h2>
-                <div class="search-box">
-                    <input
-                        type="text"
-                        id="searchInput"
-                        placeholder="Search all columns..."
-                        disabled
-                    >
+                <div class="section-header" onclick="toggleSection(event, 'search-section')">
+                    <div class="section-title">
+                        <h2 style="margin-bottom: 0;">Search</h2>
+                    </div>
+                    <button class="toggle-btn" id="searchToggleBtn" onclick="event.stopPropagation()">▼</button>
+                </div>
+                <div class="section-content">
+                    <div class="search-box">
+                        <input
+                            type="text"
+                            id="searchInput"
+                            placeholder="Search all columns..."
+                            disabled
+                        >
+                    </div>
                 </div>
             </div>
 
             <!-- Results Section -->
             <div class="results-section">
                 <div class="results-header">
-                    <h2>Results</h2>
-                    <div class="results-count">
-                        <span id="resultCount">0</span> / <span id="totalCount">0</span> rows
+                    <div class="section-header" onclick="toggleSection(event, 'results-section', true)" style="justify-content: space-between; width: 100%;">
+                        <div class="section-title">
+                            <h2 style="margin-bottom: 0;">Results</h2>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 20px;">
+                            <div class="results-count">
+                                <span id="resultCount">0</span> / <span id="totalCount">0</span> rows
+                            </div>
+                            <button class="toggle-btn" id="resultsToggleBtn" onclick="event.stopPropagation()">▼</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="section-content">
+
+                <!-- Top Pagination Controls -->
+                <div class="pagination-section pagination-top" id="paginationSectionTop" style="display: none;">
+                    <div class="pagination-controls">
+                        <button id="firstPageBtnTop" class="btn btn-page" disabled>⏮️ First</button>
+                        <button id="prevPageBtnTop" class="btn btn-page" disabled>◀️ Previous</button>
+
+                        <div class="page-info">
+                            Page <span id="currentPageTop">1</span> of <span id="totalPagesTop">1</span>
+                            (<span id="pageSizeTop">50</span> rows per page)
+                        </div>
+
+                        <button id="nextPageBtnTop" class="btn btn-page" disabled>▶️ Next</button>
+                        <button id="lastPageBtnTop" class="btn btn-page" disabled>⏭️ Last</button>
+                    </div>
+
+                    <div class="page-size-selector">
+                        <label for="pageSizeSelectTop">Rows per page:</label>
+                        <select id="pageSizeSelectTop">
+                            <option value="25">25</option>
+                            <option value="50" selected>50</option>
+                            <option value="100">100</option>
+                            <option value="250">250</option>
+                            <option value="500">500</option>
+                        </select>
                     </div>
                 </div>
 
@@ -687,9 +841,15 @@
                         </select>
                     </div>
                 </div>
+                </div>
             </div>
         </div>
     </div>
+
+    <!-- Scroll to Top Button -->
+    <button id="scrollToTopBtn" class="scroll-to-top" style="display: none;">
+        ⬆️ Top
+    </button>
 
     <!-- ============================================================
          JAVASCRIPT SECTION
@@ -736,6 +896,25 @@
         const totalPagesSpan = document.getElementById('totalPages');
         const pageSizeSpan = document.getElementById('pageSize');
         const pageSizeSelect = document.getElementById('pageSizeSelect');
+
+        // Top pagination elements
+        const paginationSectionTop = document.getElementById('paginationSectionTop');
+        const firstPageBtnTop = document.getElementById('firstPageBtnTop');
+        const prevPageBtnTop = document.getElementById('prevPageBtnTop');
+        const nextPageBtnTop = document.getElementById('nextPageBtnTop');
+        const lastPageBtnTop = document.getElementById('lastPageBtnTop');
+        const currentPageSpanTop = document.getElementById('currentPageTop');
+        const totalPagesSpanTop = document.getElementById('totalPagesTop');
+        const pageSizeSpanTop = document.getElementById('pageSizeTop');
+        const pageSizeSelectTop = document.getElementById('pageSizeSelectTop');
+
+        // Scroll to top button
+        const scrollToTopBtn = document.getElementById('scrollToTopBtn');
+
+        // Section toggle buttons
+        const filterToggleBtn = document.getElementById('filterToggleBtn');
+        const searchToggleBtn = document.getElementById('searchToggleBtn');
+        const resultsToggleBtn = document.getElementById('resultsToggleBtn');
 
         // ================================================================
         // UTILITY FUNCTIONS
@@ -1166,23 +1345,40 @@
             resultCount.textContent = state.filteredData.length;
             totalCount.textContent = state.csvData.length;
 
-            // Update pagination info
-            currentPageSpan.textContent = state.currentPage;
-            totalPagesSpan.textContent = state.totalPages || 1;
-            pageSizeSpan.textContent = state.pageSize;
+            // Update pagination info (both top and bottom)
+            const pageElements = [
+                { current: currentPageSpan, total: totalPagesSpan, size: pageSizeSpan, section: paginationSection },
+                { current: currentPageSpanTop, total: totalPagesSpanTop, size: pageSizeSpanTop, section: paginationSectionTop }
+            ];
 
-            // Show/hide pagination based on whether there are multiple pages
-            if (state.totalPages > 1) {
-                paginationSection.style.display = 'block';
-            } else {
-                paginationSection.style.display = 'none';
-            }
+            pageElements.forEach(elements => {
+                elements.current.textContent = state.currentPage;
+                elements.total.textContent = state.totalPages || 1;
+                elements.size.textContent = state.pageSize;
 
-            // Update button states
-            firstPageBtn.disabled = state.currentPage <= 1;
-            prevPageBtn.disabled = state.currentPage <= 1;
-            nextPageBtn.disabled = state.currentPage >= state.totalPages;
-            lastPageBtn.disabled = state.currentPage >= state.totalPages;
+                // Show/hide pagination based on whether there are multiple pages
+                if (state.totalPages > 1) {
+                    elements.section.style.display = 'block';
+                } else {
+                    elements.section.style.display = 'none';
+                }
+            });
+
+            // Update button states (both top and bottom)
+            const buttonPairs = [
+                [firstPageBtn, firstPageBtnTop],
+                [prevPageBtn, prevPageBtnTop],
+                [nextPageBtn, nextPageBtnTop],
+                [lastPageBtn, lastPageBtnTop]
+            ];
+
+            buttonPairs.forEach(([bottomBtn, topBtn]) => {
+                const disabled = (bottomBtn === firstPageBtn || bottomBtn === prevPageBtn)
+                    ? state.currentPage <= 1
+                    : state.currentPage >= state.totalPages;
+                bottomBtn.disabled = disabled;
+                topBtn.disabled = disabled;
+            });
         }
 
         /**
@@ -1207,6 +1403,7 @@
             resetBtn.disabled = !enabled;
             toggleAllBtn.disabled = !enabled;
             pageSizeSelect.disabled = !enabled;
+            pageSizeSelectTop.disabled = !enabled;
 
             document.querySelectorAll('[data-header]').forEach(element => {
                 element.disabled = !enabled;
@@ -1215,6 +1412,7 @@
             // Hide pagination when no data
             if (!enabled) {
                 paginationSection.style.display = 'none';
+                paginationSectionTop.style.display = 'none';
             }
 
             if (enabled) {
@@ -1237,6 +1435,49 @@
         lastPageBtn.addEventListener('click', () => goToPage(state.totalPages));
         pageSizeSelect.addEventListener('change', handlePageSizeChange);
 
+        // Top pagination event listeners
+        firstPageBtnTop.addEventListener('click', () => goToPage(1));
+        prevPageBtnTop.addEventListener('click', () => goToPage(state.currentPage - 1));
+        nextPageBtnTop.addEventListener('click', () => goToPage(state.currentPage + 1));
+        lastPageBtnTop.addEventListener('click', () => goToPage(state.totalPages));
+        pageSizeSelectTop.addEventListener('change', handlePageSizeChangeTop);
+
+        // Scroll to top functionality
+        scrollToTopBtn.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        // Show/hide scroll to top button based on scroll position
+        window.addEventListener('scroll', () => {
+            if (window.pageYOffset > 300) {
+                scrollToTopBtn.style.display = 'block';
+            } else {
+                scrollToTopBtn.style.display = 'none';
+            }
+        });
+
+        // ================================================================
+        // SECTION TOGGLE FUNCTIONALITY
+        // ================================================================
+
+        /**
+         * Toggle section collapse/expand
+         */
+        function toggleSection(event, sectionClass, isNestedHeader = false) {
+            const section = event.target.closest(`.${sectionClass}`) ||
+                           (isNestedHeader ? event.target.closest('.results-section') : null);
+            if (!section) return;
+
+            const sectionContent = section.querySelector('.section-content');
+            const toggleBtn = section.querySelector('.toggle-btn');
+
+            if (!sectionContent || !toggleBtn) return;
+
+            sectionContent.classList.toggle('collapsed');
+            section.classList.toggle('collapsed');
+            toggleBtn.textContent = section.classList.contains('collapsed') ? '▶' : '▼';
+        }
+
         // ================================================================
         // PAGINATION FUNCTIONS
         // ================================================================
@@ -1255,9 +1496,29 @@
          * Handle page size change
          */
         function handlePageSizeChange(event) {
-            state.pageSize = parseInt(event.target.value);
+            const newPageSize = parseInt(event.target.value);
+            state.pageSize = newPageSize;
             state.currentPage = 1; // Reset to first page
             state.totalPages = Math.ceil(state.filteredData.length / state.pageSize);
+
+            // Sync the other page size select
+            pageSizeSelectTop.value = newPageSize;
+
+            renderResults();
+        }
+
+        /**
+         * Handle top page size change
+         */
+        function handlePageSizeChangeTop(event) {
+            const newPageSize = parseInt(event.target.value);
+            state.pageSize = newPageSize;
+            state.currentPage = 1; // Reset to first page
+            state.totalPages = Math.ceil(state.filteredData.length / state.pageSize);
+
+            // Sync the other page size select
+            pageSizeSelect.value = newPageSize;
+
             renderResults();
         }
 
